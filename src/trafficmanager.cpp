@@ -697,6 +697,59 @@ int TrafficManager::_GeneratePacket( int source, int dest, int size, int cl,
   return pid;
 }
 
+
+// TULIP_IMPORTANT: POWER_GATING SECTION *********************************************
+
+//  Check if there are incoming flits waiting to be routed
+bool TrafficManager::_IsRouterActive(int subnet) {
+    for (int node = 0; node < _nodes; ++node) {
+        if (!_net[subnet]->ReadFlit(node)) {
+            return true; // Router is active if there are incoming flits
+        }
+    }
+    return false; // Router is idle if there are no incoming flits
+}
+
+//  Check if the buffer occupancy exceeds a certain threshold
+bool TrafficManager::_IsBufferActive(int node, int subnet) {
+    int bufferOccupancy = _buf_states[node][subnet]->Occupancy();
+    return (bufferOccupancy > BUFFER_THRESHOLD); // Buffer is active if occupancy exceeds threshold
+}
+
+// update router power state based on activity
+void TrafficManager::_UpdateRouterPowerState(int subnet) {
+    bool activityDetected = false;
+    // Check if there is activity in the router
+    // Modify this based on actual activity detection logic in your code
+    // For simplicity, we assume there's always some activity
+    activityDetected = _IsRouterActive(subnet);
+    // activityDetected = true;
+    
+    if (activityDetected) {
+        routerPowerStates[subnet] = ROUTER_ACTIVE;
+    } else {
+        routerPowerStates[subnet] = ROUTER_IDLE;
+    }
+}
+
+// update buffer power state based on activity
+void TrafficManager::_UpdateBufferPowerState(int node, int subnet) {
+    bool activityDetected = false;
+    // Check if there is activity in the buffer
+    // Modify this based on actual activity detection logic in your code
+    // For simplicity, we assume there's always some activity
+    activityDetected = _IsBufferActive(node, subnet);
+    // activityDetected = true;
+    
+    if (activityDetected) {
+        bufferPowerStates[node][subnet] = BUFFER_ACTIVE;
+    } else {
+        bufferPowerStates[node][subnet] = BUFFER_STANDBY;
+    }
+}
+
+// TULIP_IMPORTANT
+
 void TrafficManager::_Step( )
 {
   bool flits_in_flight = false;

@@ -28,6 +28,9 @@
 #ifndef _TRAFFICMANAGER_HPP_
 #define _TRAFFICMANAGER_HPP_
 
+// POWER_GATING SECTION
+#define BUFFER_THRESHOLD 10
+
 #include <list>
 #include <map>
 #include <set>
@@ -219,12 +222,51 @@ protected:
   ostream * _max_credits_out;
 #endif
 
+
+  // POWERGATING SECTION
+
+  //  power states for routers
+  enum RouterPowerState {
+        ROUTER_ACTIVE,
+        ROUTER_IDLE
+  };
+
+  RouterPowerState _router_power_state;
+
+
+  //  power states for buffers
+  enum BufferPowerState {
+        BUFFER_ACTIVE,
+        BUFFER_STANDBY,
+        BUFFER_OFF
+  };
+
+  BufferPowerState _buffer_power_state;
+
+
+  // Variables to track power state of routers and buffers
+  vector<RouterPowerState> routerPowerStates;
+  vector<vector<BufferPowerState>> bufferPowerStates;
+
+
   // ============ Internal methods ============ 
 
   virtual void _RetireFlit( Flit *f, int dest );
   virtual void _RetirePacket( Flit * head, Flit * tail );
 
   virtual void _Inject() = 0;
+
+  // POWERGATING SECTION: Methods Start
+
+  void _UpdateBufferPowerState(int node, int subnet);
+
+  void _UpdateRouterPowerState(int subnet);
+
+  virtual bool _IsBufferActive(int node, int subnet);
+
+  virtual bool _IsRouterActive(int subnet);
+
+  // POWERGATING SECTION: Methods End
   
   void _Step( );
 
